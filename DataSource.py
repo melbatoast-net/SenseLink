@@ -3,6 +3,7 @@
 import logging
 import dpath.util
 import asyncio
+import json
 from math import isclose
 from DataController import HASSController
 from DataController import MQTTController, MQTTListener
@@ -324,8 +325,15 @@ class MQTTSource(DataSource):
             logging.debug(f'Power updated for {self.identifier}: {round(fval, 4)}')
 
     async def power_handler(self, value):
-        logging.debug(f'Power topic update for {self.identifier}: {value}')
-        self.update_power(value)
+        #logging.info(f'Power topic update for {self.identifier}: {value}')
+        #logging.info(f'keypath: {self.power_topic_keypath}')
+        if self.power_topic_keypath is None:
+            # If using power_keypath, just use value for power update
+            logging.debug(f'Pulling power from base state value for {self.identifier}')
+            self.update_power(value)
+        else:
+            logging.info(f'Pulling power from keypath: {self.power_topic_keypath} for {self.identifier}')
+            self.update_power(get_float_at_path(json.loads(value), self.power_topic_keypath))
 
     async def state_handler(self, value):
         logging.debug(f'State topic update for {self.identifier}: {value}')
