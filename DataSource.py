@@ -327,13 +327,24 @@ class MQTTSource(DataSource):
     async def power_handler(self, value):
         #logging.info(f'Power topic update for {self.identifier}: {value}')
         #logging.info(f'keypath: {self.power_topic_keypath}')
+        newPower = 0.0
         if self.power_topic_keypath is None:
             # If using power_keypath, just use value for power update
             logging.debug(f'Pulling power from base state value for {self.identifier}')
-            self.update_power(value)
+            #self.update_power(value)
+            newPower = value
         else:
             logging.info(f'Pulling power from keypath: {self.power_topic_keypath} for {self.identifier}')
-            self.update_power(get_float_at_path(json.loads(value), self.power_topic_keypath))
+            try:
+                #self.update_power(get_float_at_path(json.loads(value), self.power_topic_keypath))
+                newPower = get_float_at_path(json.loads(value), self.power_topic_keypath)
+            except Exception as e:
+                pass
+        self.update_power(newPower)
+        if newPower == 0.0:
+            self.state = False
+        else:
+            self.state = True
 
     async def state_handler(self, value):
         logging.debug(f'State topic update for {self.identifier}: {value}')
